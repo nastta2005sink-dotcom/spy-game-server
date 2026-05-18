@@ -2,18 +2,13 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Spy Movie - Multiplayer</title>
-    <script src="https://cdn.socket.io/4.6.1/socket.io.min.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
-            font-family: 'Segoe UI', 'Courier New', monospace;
+            font-family: 'Segoe UI', monospace;
             min-height: 100vh;
             background: linear-gradient(135deg, #0a0f1e 0%, #0c1222 100%);
             display: flex;
@@ -21,29 +16,15 @@
             align-items: center;
             padding: 20px;
         }
-
-        /* Фон с картинкой — замените URL на вашу картинку */
-        .game-wrapper {
-            max-width: 1200px;
+        .container {
+            max-width: 900px;
             width: 100%;
-            background-image: url('https://t3.ftcdn.net/jpg/07/29/00/84/360_F_729008418_15nHS9V5BP8Dy8uGYIyQYRaHgCYzIwL2.jpg');
-            background-size: cover;
-            background-position: center;
+            background: rgba(10, 14, 23, 0.9);
             border-radius: 48px;
-            box-shadow: 0 25px 45px rgba(0,0,0,0.5);
+            padding: 30px;
+            border: 1px solid rgba(255, 215, 0, 0.3);
         }
-
-        .glass {
-            background: rgba(10, 14, 23, 0.85);
-            backdrop-filter: blur(3px);
-            border-radius: 48px;
-            padding: 24px;
-        }
-
-        .hidden {
-            display: none !important;
-        }
-
+        .hidden { display: none !important; }
         .title {
             font-size: 2rem;
             background: linear-gradient(135deg, #FFD966, #FFB347);
@@ -51,62 +32,20 @@
             background-clip: text;
             color: transparent;
             text-align: center;
-            margin-bottom: 10px;
         }
-
-        input, button, textarea {
+        input, button {
             padding: 12px 20px;
             border-radius: 60px;
             border: none;
             font-size: 1rem;
             font-weight: bold;
-            font-family: inherit;
-        }
-
-        input, textarea {
-            background: #1e2438;
-            color: white;
             width: 100%;
         }
-
-        textarea {
-            border-radius: 20px;
-            resize: vertical;
-        }
-
-        button {
-            background: #2d3e5f;
-            color: white;
-            cursor: pointer;
-            transition: 0.2s;
-            width: 100%;
-        }
-
-        button:hover:not(:disabled) {
-            background: #4a6a8f;
-            transform: scale(0.98);
-        }
-
-        button:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-
-        .players-list {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 15px;
-            margin: 20px 0;
-            justify-content: center;
-        }
-
-        .player-card {
-            background: #1b212f;
-            padding: 10px 25px;
-            border-radius: 40px;
-            border-left: 4px solid gold;
-        }
-
+        input { background: #1e2438; color: white; margin-bottom: 10px; }
+        button { background: #2d3e5f; color: white; cursor: pointer; margin-top: 5px; }
+        button:hover { background: #4a6a8f; }
+        .players-list { display: flex; flex-wrap: wrap; gap: 15px; margin: 20px 0; justify-content: center; }
+        .player-card { background: #1b212f; padding: 10px 25px; border-radius: 40px; border-left: 4px solid gold; }
         .character-card {
             background: #03060cee;
             border-radius: 32px;
@@ -115,433 +54,219 @@
             border: 2px solid #ffc857;
             margin: 20px 0;
         }
-
-        .spy-badge {
-            background: #8b0000;
-            color: #ffcc00;
-            padding: 8px 20px;
-            border-radius: 40px;
-            display: inline-block;
-            margin-top: 10px;
-            font-weight: bold;
-        }
-
-        .question-box {
-            background: #000000aa;
-            border-radius: 32px;
-            padding: 20px;
-            margin: 20px 0;
-            text-align: center;
-        }
-
-        .question-text {
-            font-size: 1.3rem;
-            color: #FFE5B4;
-            margin-bottom: 15px;
-        }
-
-        .vote-option {
-            background: #2a1e2c;
-            padding: 10px 20px;
-            border-radius: 40px;
-            cursor: pointer;
-            transition: 0.2s;
-            text-align: center;
-        }
-
-        .vote-option:hover, .vote-option.selected {
-            background: #c97e00;
-        }
-
-        .timer-bar {
-            height: 6px;
-            background: gold;
-            width: 100%;
-            border-radius: 10px;
-            transition: width 1s linear;
-            margin-bottom: 15px;
-        }
-
-        .flex-between {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 10px;
-        }
-
-        .text-center {
-            text-align: center;
-        }
-
-        .mt-20 {
-            margin-top: 20px;
-        }
-
-        .mb-20 {
-            margin-bottom: 20px;
-        }
-
-        .room-code {
-            font-size: 1.5rem;
-            font-weight: bold;
-            background: #000000aa;
-            padding: 10px 20px;
-            border-radius: 20px;
-            letter-spacing: 3px;
-        }
-
-        .copy-btn {
-            background: #3a5a3a;
-            width: auto;
-        }
-
-        .answer-status {
-            font-size: 0.8rem;
-            color: #ffaa66;
-            margin-top: 10px;
-        }
-
-        .status-badge {
-            background: #1e2438;
-            padding: 5px 15px;
-            border-radius: 40px;
-            font-size: 0.8rem;
-        }
-
-        @media (max-width: 600px) {
-            .title { font-size: 1.5rem; }
-            .glass { padding: 20px; }
-            .question-text { font-size: 1rem; }
-        }
+        .spy-badge { background: #8b0000; color: #ffcc00; padding: 8px 20px; border-radius: 40px; display: inline-block; margin-top: 10px; }
+        .question-box { background: #000000aa; border-radius: 32px; padding: 20px; margin: 20px 0; text-align: center; }
+        .question-text { font-size: 1.3rem; color: #FFE5B4; margin-bottom: 15px; }
+        .vote-option { background: #2a1e2c; padding: 10px 20px; border-radius: 40px; cursor: pointer; text-align: center; margin: 5px; }
+        .vote-option:hover, .vote-option.selected { background: #c97e00; }
+        .flex-between { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
+        .text-center { text-align: center; }
+        .room-code { font-size: 1.5rem; font-weight: bold; background: #000000aa; padding: 10px 20px; border-radius: 20px; }
+        .copy-btn { background: #3a5a3a; width: auto; }
+        .vote-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; margin-top: 15px; }
     </style>
 </head>
 <body>
-<div class="game-wrapper">
-    <div class="glass">
-        <!-- ЭКРАН ЛОББИ -->
-        <div id="lobbyScreen">
-            <h1 class="title">🕵️‍♂️ SPY MOVIE 🎬</h1>
-            <p class="text-center" style="color:#ccc;">One player is the spy. Find them!</p>
-            <div style="display: flex; gap: 20px; margin-top: 30px; flex-wrap: wrap;">
-                <div style="flex: 1; background:#11161f; padding: 20px; border-radius: 32px;">
-                    <h3 class="text-center">🎭 Create Room</h3>
-                    <input type="text" id="createName" placeholder="Your name" style="margin-bottom: 10px;">
-                    <button id="createBtn">➕ CREATE ROOM</button>
-                </div>
-                <div style="flex: 1; background:#11161f; padding: 20px; border-radius: 32px;">
-                    <h3 class="text-center">🔗 Join Room</h3>
-                    <input type="text" id="joinCode" placeholder="Room Code" style="margin-bottom: 10px;">
-                    <input type="text" id="joinName" placeholder="Your name" style="margin-bottom: 10px;">
-                    <button id="joinBtn">🚪 JOIN GAME</button>
-                </div>
+<div class="container" id="app">
+    <!-- ЛОББИ -->
+    <div id="lobbyScreen">
+        <h1 class="title">🕵️‍♂️ SPY MOVIE 🎬</h1>
+        <p class="text-center" style="color:#ccc;">One player is the spy. Find them!</p>
+        <div style="display: flex; gap: 20px; margin-top: 30px; flex-wrap: wrap;">
+            <div style="flex:1; background:#11161f; padding:20px; border-radius:32px;">
+                <h3 class="text-center">🎭 Create Room</h3>
+                <input type="text" id="createName" placeholder="Your name">
+                <button id="createBtn">➕ CREATE ROOM</button>
             </div>
-            <footer class="text-center" style="margin-top: 30px; color:#666;">🎬 Up to 5 players | Answer questions, find the spy!</footer>
+            <div style="flex:1; background:#11161f; padding:20px; border-radius:32px;">
+                <h3 class="text-center">🔗 Join Room</h3>
+                <input type="text" id="joinCode" placeholder="Room Code">
+                <input type="text" id="joinName" placeholder="Your name">
+                <button id="joinBtn">🚪 JOIN GAME</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- КОМНАТА -->
+    <div id="roomScreen" class="hidden">
+        <div class="flex-between">
+            <span class="room-code" id="roomCodeDisplay">---</span>
+            <button id="copyCodeBtn" class="copy-btn">📋 Copy</button>
+        </div>
+        <div id="playersList" class="players-list"></div>
+        <p id="roomMessage" class="text-center" style="color:#ffaa66;"></p>
+        <button id="startGameBtn">🎞️ START GAME</button>
+        <button id="leaveRoomBtn" style="margin-top:10px; background:#3a2a2a;">🚪 Leave Room</button>
+    </div>
+
+    <!-- ИГРА -->
+    <div id="gameScreen" class="hidden">
+        <div class="character-card">
+            <div style="font-size:48px" id="charEmoji">🎭</div>
+            <div id="charMovie" style="font-size:1.3rem; font-weight:bold;">????</div>
+            <div id="charActor">???</div>
+            <div id="charSpyBadge" class="spy-badge hidden">⚠️ YOU ARE THE SPY! ⚠️</div>
         </div>
 
-        <!-- ЭКРАН КОМНАТЫ -->
-        <div id="roomScreen" class="hidden">
-            <div class="flex-between">
-                <span class="room-code" id="roomCodeDisplay">---</span>
-                <button id="copyCodeBtn" class="copy-btn">📋 Copy</button>
-            </div>
-            <div id="playersList" class="players-list"></div>
-            <p id="roomMessage" class="text-center" style="color:#ffaa66;"></p>
-            <button id="startGameBtn">🎞️ START GAME</button>
-            <button id="leaveRoomBtn" style="margin-top: 10px; background:#3a2a2a;">🚪 Leave Room</button>
+        <div class="question-box">
+            <div class="question-text">Discuss: Who seems suspicious? What do you know about the movie?</div>
+            <div id="voteContainer" class="vote-grid"></div>
         </div>
 
-        <!-- ЭКРАН ИГРЫ -->
-        <div id="gameScreen" class="hidden">
-            <div class="flex-between">
-                <span class="status-badge">🎬 Round <span id="roundNum">1</span>/<span id="totalRounds">5</span></span>
-                <span class="status-badge" id="phaseDisplay">📝 Answer</span>
-            </div>
-            <div class="timer-bar" id="timerBar"></div>
-
-            <div class="character-card">
-                <div style="font-size: 64px;" id="charEmoji">🎭</div>
-                <div id="charMovie" style="font-size: 1.3rem; font-weight: bold;">????</div>
-                <div id="charActor" style="font-size: 1rem;">???</div>
-                <div id="charSpyBadge" class="spy-badge hidden">⚠️ YOU ARE THE SPY! ⚠️</div>
-                <div id="charNote" style="font-size: 0.7rem; color:#aaa; margin-top: 10px;">Answer carefully to blend in!</div>
-            </div>
-
-            <div class="question-box">
-                <div class="question-text" id="questionText">Loading...</div>
-                <div id="answerArea"></div>
-                <div id="answerStatus" class="answer-status"></div>
-            </div>
-
-            <div id="votingArea" class="hidden">
-                <h3 class="text-center">🗳️ VOTE FOR THE SPY</h3>
-                <div id="voteList" class="flex-between" style="justify-content: center; gap: 10px; flex-wrap: wrap;"></div>
-                <button id="confirmVoteBtn" class="mt-20">✅ CAST VOTE</button>
-            </div>
-
-            <div id="gameMsg" style="background:#221c0e; border-radius: 20px; padding: 12px; margin-top: 15px; text-align: center;"></div>
-            <button id="nextRoundBtn" class="hidden mt-20">➡️ Next Round</button>
-            <button id="quitGameBtn" style="margin-top: 10px; background:#3a2a2a;">🏠 Quit to Lobby</button>
-        </div>
+        <div id="gameMsg" style="background:#221c0e; border-radius:20px; padding:10px; margin-top:15px; text-align:center;"></div>
+        <button id="quitGameBtn" style="margin-top:10px; background:#3a2a2a;">🏠 Quit to Lobby</button>
     </div>
 </div>
 
 <script>
-    let socket = null;
-    let currentRoomCode = null;
-    let currentPlayerId = null;
-    let myCharacter = null;
-    let hasAnswered = false;
-    let timerInterval = null;
+    const socket = io();
+    let currentRoom = null;
+    let myPlayer = null;
+    let currentMovie = null;
+    let isSpy = false;
+    let hasVoted = false;
 
+    // Elements
     const lobbyScreen = document.getElementById('lobbyScreen');
     const roomScreen = document.getElementById('roomScreen');
     const gameScreen = document.getElementById('gameScreen');
+    const playersList = document.getElementById('playersList');
+    const roomCodeDisplay = document.getElementById('roomCodeDisplay');
 
-    function connectSocket() {
-        socket = io();
-        
-        socket.on('connect', () => {
-            console.log('Connected to server');
-        });
-
-        socket.on('roomUpdate', (data) => {
-            if (data && currentRoomCode) {
-                document.getElementById('playersList').innerHTML = data.players.map(p => `<div class="player-card">🎭 ${p.name}</div>`).join('');
-                document.getElementById('roomMessage').innerHTML = `${data.playerCount}/5 players. ${data.playerCount >= 1 ? 'Ready to start!' : 'Need at least 1 player.'}`;
-            }
-        });
-
-        socket.on('gameStarted', (data) => {
-            myCharacter = data.playersData.find(p => p.playerId === currentPlayerId);
-            if (myCharacter) {
-                document.getElementById('charMovie').innerHTML = `🎬 ${myCharacter.movie}`;
-                document.getElementById('charActor').innerHTML = `⭐ ${myCharacter.actor}`;
-                document.getElementById('charEmoji').innerHTML = myCharacter.emoji || '🎭';
-                if (myCharacter.isSpy) {
-                    document.getElementById('charSpyBadge').classList.remove('hidden');
-                    document.getElementById('charNote').innerHTML = '⚠️ You are the spy! Blend in! ⚠️';
-                } else {
-                    document.getElementById('charSpyBadge').classList.add('hidden');
-                    document.getElementById('charNote').innerHTML = '🎭 Loyal agent. Find the spy!';
-                }
-            }
-        });
-
-        socket.on('roundStart', (data) => {
-            startTimer(60);
-            document.getElementById('roundNum').innerHTML = data.round;
-            document.getElementById('totalRounds').innerHTML = data.totalRounds;
-            document.getElementById('phaseDisplay').innerHTML = '📝 Answer';
-            document.getElementById('questionText').innerHTML = data.question;
-            document.getElementById('votingArea').classList.add('hidden');
-            document.getElementById('nextRoundBtn').classList.add('hidden');
-            document.getElementById('answerStatus').innerHTML = '';
-            document.getElementById('gameMsg').innerHTML = '';
-            hasAnswered = false;
-            
-            const answerArea = document.getElementById('answerArea');
-            answerArea.innerHTML = '';
-            
-            const textarea = document.createElement('textarea');
-            textarea.placeholder = 'Type your answer here...';
-            textarea.rows = 3;
-            
-            const submitBtn = document.createElement('button');
-            submitBtn.innerHTML = '📤 SUBMIT ANSWER';
-            submitBtn.style.marginTop = '10px';
-            submitBtn.onclick = () => {
-                if (hasAnswered) {
-                    document.getElementById('answerStatus').innerHTML = 'You already answered!';
-                    return;
-                }
-                const answer = textarea.value.trim();
-                if (!answer) {
-                    document.getElementById('answerStatus').innerHTML = 'Please write an answer!';
-                    return;
-                }
-                socket.emit('answerQuestion', { roomCode: currentRoomCode, answer: answer }, (response) => {
-                    if (response && response.success) {
-                        hasAnswered = true;
-                        document.getElementById('answerStatus').innerHTML = '✅ Answer submitted! Waiting for other players...';
-                        textarea.disabled = true;
-                        submitBtn.disabled = true;
-                    }
-                });
-            };
-            
-            answerArea.appendChild(textarea);
-            answerArea.appendChild(submitBtn);
-        });
-
-        socket.on('answersCount', (data) => {
-            document.getElementById('answerStatus').innerHTML = `📝 ${data.answered}/${data.total} players have answered...`;
-        });
-
-        socket.on('votingStart', (data) => {
-            stopTimer();
-            document.getElementById('phaseDisplay').innerHTML = '🗳️ Vote';
-            document.getElementById('answerArea').innerHTML = '';
-            document.getElementById('votingArea').classList.remove('hidden');
-            document.getElementById('gameMsg').innerHTML = 'Vote for who you think is the spy!';
-            
-            const voteList = document.getElementById('voteList');
-            voteList.innerHTML = '';
-            window.selectedVote = null;
-            
-            data.players.forEach(p => {
-                if (p.id !== currentPlayerId) {
-                    const div = document.createElement('div');
-                    div.className = 'vote-option';
-                    div.innerHTML = p.name;
-                    div.onclick = () => {
-                        document.querySelectorAll('.vote-option').forEach(el => el.classList.remove('selected'));
-                        div.classList.add('selected');
-                        window.selectedVote = p.id;
-                    };
-                    voteList.appendChild(div);
-                }
-            });
-            
-            startTimer(45);
-        });
-
-        socket.on('voteResult', (data) => {
-            stopTimer();
-            document.getElementById('gameMsg').innerHTML = data.message;
-            document.getElementById('votingArea').classList.add('hidden');
-            document.getElementById('nextRoundBtn').classList.remove('hidden');
-        });
-
-        socket.on('gameEnd', (data) => {
-            stopTimer();
-            document.getElementById('gameMsg').innerHTML = data.message;
-            document.getElementById('votingArea').classList.add('hidden');
-            document.getElementById('answerArea').innerHTML = '';
-            document.getElementById('nextRoundBtn').classList.add('hidden');
-            document.getElementById('phaseDisplay').innerHTML = '🏁 Game Over';
-        });
-
-        socket.on('disconnect', () => {
-            document.getElementById('gameMsg').innerHTML = '⚠️ Disconnected from server!';
-        });
-    }
-
-    function startTimer(seconds) {
-        stopTimer();
-        let timeLeft = seconds;
-        const bar = document.getElementById('timerBar');
-        bar.style.width = '100%';
-        timerInterval = setInterval(() => {
-            timeLeft--;
-            const percent = (timeLeft / seconds) * 100;
-            bar.style.width = `${Math.max(0, percent)}%`;
-            if (timeLeft <= 0) {
-                stopTimer();
-            }
-        }, 1000);
-    }
-
-    function stopTimer() {
-        if (timerInterval) {
-            clearInterval(timerInterval);
-            timerInterval = null;
-        }
-    }
-
-    // Event listeners
+    // Create Room
     document.getElementById('createBtn').onclick = () => {
         const name = document.getElementById('createName').value.trim();
-        if (!name) return alert('Enter your name!');
-        if (!socket) connectSocket();
-        socket.emit('createRoom', { playerName: name }, (response) => {
-            if (response.success) {
-                currentRoomCode = response.roomCode;
-                currentPlayerId = response.playerId;
-                document.getElementById('roomCodeDisplay').innerHTML = response.roomCode;
-                lobbyScreen.classList.add('hidden');
-                roomScreen.classList.remove('hidden');
-            } else {
-                alert('Error creating room');
-            }
-        });
+        if (name) socket.emit('createRoom', name);
     };
 
+    // Join Room
     document.getElementById('joinBtn').onclick = () => {
-        const code = document.getElementById('joinCode').value.trim().toUpperCase();
+        const code = document.getElementById('joinCode').value.trim();
         const name = document.getElementById('joinName').value.trim();
-        if (!code || !name) return alert('Enter room code and your name!');
-        if (!socket) connectSocket();
-        socket.emit('joinRoom', { roomCode: code, playerName: name }, (response) => {
-            if (response.success) {
-                currentRoomCode = response.roomCode;
-                currentPlayerId = response.playerId;
-                document.getElementById('roomCodeDisplay').innerHTML = response.roomCode;
-                lobbyScreen.classList.add('hidden');
-                roomScreen.classList.remove('hidden');
-            } else {
-                alert(response.error || 'Error joining room');
-            }
-        });
+        if (code && name) socket.emit('joinRoom', { code, name });
     };
 
+    // Start Game
     document.getElementById('startGameBtn').onclick = () => {
-        socket.emit('startGame', { roomCode: currentRoomCode }, (response) => {
-            if (response && response.success) {
-                roomScreen.classList.add('hidden');
-                gameScreen.classList.remove('hidden');
-            } else if (response && response.error) {
-                alert(response.error);
-            }
-        });
+        if (currentRoom) socket.emit('startGame', currentRoom);
     };
 
-    document.getElementById('copyCodeBtn').onclick = () => {
-        const code = document.getElementById('roomCodeDisplay').innerHTML;
-        navigator.clipboard.writeText(code);
-        alert('Code copied: ' + code);
-    };
-
+    // Leave Room
     document.getElementById('leaveRoomBtn').onclick = () => {
-        if (currentRoomCode && socket) {
-            socket.emit('leaveRoom', { roomCode: currentRoomCode });
-        }
-        stopTimer();
-        currentRoomCode = null;
-        lobbyScreen.classList.remove('hidden');
-        roomScreen.classList.add('hidden');
-    };
-
-    document.getElementById('confirmVoteBtn').onclick = () => {
-        if (!window.selectedVote) {
-            alert('Select a player to vote for!');
-            return;
-        }
-        socket.emit('vote', { roomCode: currentRoomCode, targetPlayerId: window.selectedVote }, (response) => {
-            if (response && response.success) {
-                document.getElementById('gameMsg').innerHTML = 'Vote cast! Waiting for others...';
-                document.getElementById('confirmVoteBtn').disabled = true;
-            } else {
-                alert(response?.error || 'Error casting vote');
-            }
-        });
-    };
-
-    document.getElementById('nextRoundBtn').onclick = () => {
-        document.getElementById('nextRoundBtn').classList.add('hidden');
+        location.reload();
     };
 
     document.getElementById('quitGameBtn').onclick = () => {
-        if (currentRoomCode && socket) {
-            socket.emit('leaveRoom', { roomCode: currentRoomCode });
-        }
-        stopTimer();
-        currentRoomCode = null;
-        gameScreen.classList.add('hidden');
-        lobbyScreen.classList.remove('hidden');
+        location.reload();
     };
 
-    connectSocket();
+    // Copy Code
+    document.getElementById('copyCodeBtn').onclick = () => {
+        navigator.clipboard.writeText(currentRoom);
+        alert('Room code copied: ' + currentRoom);
+    };
+
+    // Socket Events
+    socket.on('roomCreated', (data) => {
+        currentRoom = data.roomCode;
+        myPlayer = data.player;
+        showRoom(data.roomCode, [myPlayer]);
+    });
+
+    socket.on('joinedRoom', (data) => {
+        currentRoom = data.roomCode;
+        myPlayer = data.player;
+        showRoom(data.roomCode, []);
+    });
+
+    socket.on('updatePlayers', (players) => {
+        renderPlayers(players);
+        const startBtn = document.getElementById('startGameBtn');
+        if (startBtn) {
+            startBtn.classList.remove('hidden');
+        }
+    });
+
+    socket.on('gameStarted', (data) => {
+        currentMovie = data.movie;
+        isSpy = (socket.id === data.spyId);
+        
+        lobbyScreen.classList.add('hidden');
+        roomScreen.classList.add('hidden');
+        gameScreen.classList.remove('hidden');
+        
+        if (isSpy) {
+            document.getElementById('charMovie').innerText = "????";
+            document.getElementById('charActor').innerText = "????";
+            document.getElementById('charEmoji').innerText = "🕵️";
+            document.getElementById('charSpyBadge').classList.remove('hidden');
+        } else {
+            document.getElementById('charMovie').innerText = data.movie.movie;
+            document.getElementById('charActor').innerText = data.movie.actor;
+            document.getElementById('charEmoji').innerText = data.movie.emoji;
+            document.getElementById('charSpyBadge').classList.add('hidden');
+        }
+        
+        // Создаем кнопки для голосования
+        const voteContainer = document.getElementById('voteContainer');
+        voteContainer.innerHTML = '<h3 style="color:white;">Vote for the spy:</h3>';
+        data.players.forEach(player => {
+            if (player.id !== socket.id) {
+                const btn = document.createElement('button');
+                btn.className = 'vote-option';
+                btn.innerText = `🗳️ ${player.name}`;
+                btn.onclick = () => {
+                    if (hasVoted) {
+                        document.getElementById('gameMsg').innerHTML = 'You already voted!';
+                        return;
+                    }
+                    socket.emit('submitVote', { roomCode: currentRoom, targetId: player.id });
+                    hasVoted = true;
+                    document.getElementById('gameMsg').innerHTML = 'Vote submitted! Waiting for others...';
+                    btn.disabled = true;
+                };
+                voteContainer.appendChild(btn);
+            }
+        });
+    });
+
+    socket.on('voteCast', (data) => {
+        document.getElementById('gameMsg').innerHTML = `Vote received! (${data.total}/${data.needed} votes)`;
+    });
+
+    socket.on('voteResult', (data) => {
+        if (data.isSpy) {
+            document.getElementById('gameMsg').innerHTML = `🕵️‍♂️ ${data.eliminatedName} was the SPY! Civilians win! 🎉`;
+        } else {
+            document.getElementById('gameMsg').innerHTML = `❌ ${data.eliminatedName} was innocent... The spy wins!`;
+        }
+        document.getElementById('voteContainer').innerHTML = '<p style="color:gold;">Game Over!</p>';
+    });
+
+    socket.on('gameEnd', (data) => {
+        document.getElementById('gameMsg').innerHTML = data.message;
+        document.getElementById('voteContainer').innerHTML = '<p style="color:gold;">Game Over! Refresh to play again.</p>';
+    });
+
+    socket.on('error', (msg) => {
+        alert(msg);
+    });
+
+    function showRoom(code, players) {
+        lobbyScreen.classList.add('hidden');
+        roomScreen.classList.remove('hidden');
+        gameScreen.classList.add('hidden');
+        roomCodeDisplay.innerText = code;
+        if (players.length) renderPlayers(players);
+    }
+
+    function renderPlayers(players) {
+        playersList.innerHTML = players.map(p => `
+            <div class="player-card">
+                ${p.isHost ? '👑' : '👤'} ${p.name}
+            </div>
+        `).join('');
+    }
 </script>
 </body>
 </html>
