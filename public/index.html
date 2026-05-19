@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Spy Movie - Multiplayer</title>
+    <title>Spy Movie - Find the Impostor!</title>
     <script src="/socket.io/socket.io.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -17,13 +17,12 @@
             padding: 20px;
         }
         .container {
-            max-width: 950px;
+            max-width: 1000px;
             width: 100%;
             background: rgba(255, 248, 235, 0.95);
             border-radius: 48px;
             padding: 35px;
             box-shadow: 0 20px 40px rgba(0,0,0,0.2);
-            border: 1px solid rgba(200, 170, 120, 0.5);
         }
         .hidden { display: none !important; }
         .title {
@@ -33,7 +32,6 @@
             background-clip: text;
             color: transparent;
             text-align: center;
-            margin-bottom: 15px;
         }
         input, button {
             padding: 14px 22px;
@@ -44,11 +42,10 @@
             width: 100%;
         }
         input { background: #f5ede3; color: #2c2c2c; border: 1px solid #d4c5b0; margin-bottom: 12px; }
-        input::placeholder { color: #999; }
         button { background: #c7a44b; color: #2c2c2c; cursor: pointer; margin-top: 6px; transition: 0.2s; }
         button:hover { background: #b8923a; transform: scale(0.98); }
         .players-list { display: flex; flex-wrap: wrap; gap: 15px; margin: 25px 0; justify-content: center; }
-        .player-card { background: #f5ede3; padding: 12px 28px; border-radius: 50px; border-left: 5px solid #c7a44b; color: #2c2c2c; font-weight: bold; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .player-card { background: #f5ede3; padding: 12px 28px; border-radius: 50px; border-left: 5px solid #c7a44b; color: #2c2c2c; font-weight: bold; }
         .character-card {
             background: linear-gradient(135deg, #fff8f0, #fef5e8);
             border-radius: 40px;
@@ -56,28 +53,30 @@
             text-align: center;
             border: 2px solid #c7a44b;
             margin: 25px 0;
-            box-shadow: 0 8px 20px rgba(0,0,0,0.1);
         }
-        .spy-badge { background: #d9534f; color: white; padding: 10px 24px; border-radius: 50px; display: inline-block; margin-top: 12px; font-weight: bold; font-size: 1.1rem; }
-        .question-box { background: #f5ede3; border-radius: 40px; padding: 25px; margin: 25px 0; text-align: center; border: 1px solid #e0d0bc; }
-        .question-text { font-size: 1.3rem; color: #3a2a1a; margin-bottom: 18px; font-weight: 600; }
-        .vote-option { background: #e8dccf; padding: 12px 20px; border-radius: 50px; cursor: pointer; text-align: center; margin: 6px; font-weight: bold; color: #2c2c2c; transition: 0.2s; border: 1px solid #d4c0a0; }
-        .vote-option:hover, .vote-option.selected { background: #c7a44b; color: white; transform: scale(0.97); }
+        .spy-badge { background: #d9534f; color: white; padding: 10px 24px; border-radius: 50px; display: inline-block; margin-top: 12px; font-size: 1.1rem; }
+        .question-box { background: #f5ede3; border-radius: 40px; padding: 25px; margin: 25px 0; }
+        .question-text { font-size: 1.2rem; color: #3a2a1a; margin-bottom: 18px; line-height: 1.5; }
+        .question-category { font-size: 0.9rem; color: #c7a44b; margin-bottom: 10px; font-weight: bold; letter-spacing: 2px; }
+        .vote-option { background: #e8dccf; padding: 12px 20px; border-radius: 50px; cursor: pointer; text-align: center; margin: 6px; font-weight: bold; color: #2c2c2c; transition: 0.2s; }
+        .vote-option:hover, .vote-option.selected { background: #c7a44b; color: white; }
         .flex-between { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; }
         .text-center { text-align: center; }
-        .room-code { font-size: 1.6rem; font-weight: bold; background: #e8dccf; padding: 12px 24px; border-radius: 50px; color: #8b6914; letter-spacing: 3px; }
+        .room-code { font-size: 1.6rem; font-weight: bold; background: #e8dccf; padding: 12px 24px; border-radius: 50px; color: #8b6914; }
         .copy-btn { background: #8b6914; color: white; width: auto; padding: 10px 20px; }
-        .copy-btn:hover { background: #6e5510; }
         .vote-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; margin-top: 20px; }
-        .game-message { background: #e8dccf; border-radius: 30px; padding: 15px; margin-top: 20px; text-align: center; color: #2c2c2c; font-weight: bold; border-left: 5px solid #c7a44b; }
+        .game-message { background: #e8dccf; border-radius: 30px; padding: 15px; margin-top: 20px; text-align: center; font-weight: bold; }
         .movie-emojii { font-size: 3rem; margin-bottom: 10px; }
-        .movie-title { font-size: 1.8rem; font-weight: bold; color: #2c2c2c; margin-bottom: 8px; }
-        .movie-actor { font-size: 1.2rem; color: #6b5a3e; }
+        .movie-title { font-size: 1.6rem; font-weight: bold; color: #2c2c2c; }
+        .movie-actor { font-size: 1.2rem; color: #6b5a3e; margin-top: 8px; }
         hr { margin: 15px 0; border-color: #e0d0bc; }
+        .questions-list { margin: 15px 0; padding: 15px; background: #fff8f0; border-radius: 24px; }
+        .question-item { padding: 10px 0; border-bottom: 1px solid #e0d0bc; color: #3a2a1a; }
+        .question-item:last-child { border-bottom: none; }
     </style>
 </head>
 <body>
-<div class="container" id="app">
+<div class="container">
     <!-- ЛОББИ -->
     <div id="lobbyScreen">
         <h1 class="title">🕵️‍♂️ SPY MOVIE 🎬</h1>
@@ -117,14 +116,28 @@
             <div id="charActor" class="movie-actor">????</div>
             <div id="charSpyBadge" class="spy-badge hidden">⚠️ YOU ARE THE SPY! ⚠️</div>
             <hr>
-            <div style="font-size:0.9rem; color:#8b7a5a;">⚡ Answer questions carefully to blend in</div>
+            <div style="font-size:0.85rem; color:#8b7a5a;">Answer questions naturally. Don't reveal you're the spy!</div>
         </div>
 
         <div class="question-box">
-            <div class="question-text">💬 Discuss the movie, actors, scenes...<br>Who seems suspicious?</div>
-            <div id="voteContainer" class="vote-grid"></div>
+            <div class="question-category">🎭 PLAYER QUESTIONS (ask each other)</div>
+            <div class="question-text">
+                💬 Ask each other about the movie, characters, scenes...<br>
+                The spy doesn't know the movie - catch them lying!
+            </div>
+            <div class="questions-list">
+                <div class="question-item">🎭 "Is your actor the main character or a supporting role?"</div>
+                <div class="question-item">🎬 "What does your character do in the movie?"</div>
+                <div class="question-item">📽️ "Describe the most iconic scene with your character"</div>
+                <div class="question-item">🌍 "Where does the movie take place?"</div>
+                <div class="question-item">🎭 "Does your character have a famous quote?"</div>
+                <div class="question-item">⚡ "What's the relationship between your character and others?"</div>
+                <div class="question-item">🎨 "What's the overall mood or atmosphere of the movie?"</div>
+                <div class="question-item">🕰️ "What time period is the movie set in?"</div>
+            </div>
         </div>
 
+        <div id="voteContainer" class="vote-grid"></div>
         <div id="gameMsg" class="game-message"></div>
         <button id="quitGameBtn" style="margin-top:15px; background:#b0a090;">🏠 Quit to Lobby</button>
     </div>
@@ -162,7 +175,6 @@
 
     document.getElementById('leaveRoomBtn').onclick = () => { location.reload(); };
     document.getElementById('quitGameBtn').onclick = () => { location.reload(); };
-
     document.getElementById('copyCodeBtn').onclick = () => {
         navigator.clipboard.writeText(currentRoom);
         alert('Room code copied: ' + currentRoom);
@@ -199,13 +211,13 @@
             document.getElementById('charSpyBadge').classList.remove('hidden');
         } else {
             document.getElementById('charMovie').innerHTML = `🎬 ${data.movie}`;
-            document.getElementById('charActor').innerHTML = `⭐ ${data.actor}`;
+            document.getElementById('charActor').innerHTML = `⭐ You play: ${data.actor}`;
             document.getElementById('charEmoji').innerHTML = data.emoji;
             document.getElementById('charSpyBadge').classList.add('hidden');
         }
         
         const voteContainer = document.getElementById('voteContainer');
-        voteContainer.innerHTML = '<div style="font-weight:bold; margin-bottom:15px; color:#5a4a2a;">🗳️ Vote for who you think is the spy:</div>';
+        voteContainer.innerHTML = '<div style="font-weight:bold; margin-bottom:15px; color:#5a4a2a;">🗳️ After discussion, vote for the spy:</div>';
         hasVoted = false;
         
         data.players.forEach(player => {
@@ -222,33 +234,32 @@
                     hasVoted = true;
                     document.getElementById('gameMsg').innerHTML = '✅ Vote submitted! Waiting for others...';
                     btn.disabled = true;
-                    btn.style.opacity = '0.6';
                 };
                 voteContainer.appendChild(btn);
             }
         });
         
         if (data.players.length === 1) {
-            voteContainer.innerHTML += '<p style="margin-top:15px;">Waiting for other players to join...</p>';
+            voteContainer.innerHTML += '<p style="margin-top:15px;">Add more players to vote!</p>';
         }
     });
 
     socket.on('voteCast', (data) => {
-        document.getElementById('gameMsg').innerHTML = `📊 Vote received! (${data.total}/${data.needed} votes)`;
+        document.getElementById('gameMsg').innerHTML = `📊 ${data.total}/${data.needed} players have voted`;
     });
 
     socket.on('voteResult', (data) => {
         if (data.isSpy) {
-            document.getElementById('gameMsg').innerHTML = `🎉🕵️‍♂️ ${data.eliminatedName} was the SPY! Civilians win! 🎉`;
+            document.getElementById('gameMsg').innerHTML = `🎉 ${data.eliminatedName} was the SPY! Civilians win! 🎉`;
         } else {
             document.getElementById('gameMsg').innerHTML = `💔 ${data.eliminatedName} was innocent... The spy wins! 💔`;
         }
-        document.getElementById('voteContainer').innerHTML = '<p style="text-align:center; font-size:1.3rem;">🎬 Game Over! Refresh to play again.</p>';
+        document.getElementById('voteContainer').innerHTML = '<p style="text-align:center; font-size:1.2rem;">🔄 Refresh page to play again</p>';
     });
 
     socket.on('gameEnd', (data) => {
         document.getElementById('gameMsg').innerHTML = data.message;
-        document.getElementById('voteContainer').innerHTML = '<p style="text-align:center; font-size:1.2rem;">🔄 Reload page to start a new game</p>';
+        document.getElementById('voteContainer').innerHTML = '<p style="text-align:center;">🔄 Reload to start a new game</p>';
     });
 
     socket.on('error', (msg) => { alert(msg); });
@@ -262,11 +273,7 @@
     }
 
     function renderPlayers(players) {
-        playersList.innerHTML = players.map(p => `
-            <div class="player-card">
-                ${p.isHost ? '👑' : '👤'} ${p.name}
-            </div>
-        `).join('');
+        playersList.innerHTML = players.map(p => `<div class="player-card">${p.isHost ? '👑' : '👤'} ${p.name}</div>`).join('');
     }
 </script>
 </body>
