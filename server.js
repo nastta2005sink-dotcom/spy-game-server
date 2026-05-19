@@ -15,28 +15,44 @@ app.get('/', (req, res) => {
 
 const rooms = new Map();
 
-// 20 КУЛЬТОВЫХ ФИЛЬМОВ С АКТЁРАМИ
-const MOVIES = [
-    { movie: "The Dark Knight", actor: "Christian Bale", emoji: "🦇" },
-    { movie: "Inception", actor: "Leonardo DiCaprio", emoji: "🌀" },
-    { movie: "Pulp Fiction", actor: "John Travolta", emoji: "🍔" },
-    { movie: "Forrest Gump", actor: "Tom Hanks", emoji: "🍫" },
-    { movie: "The Matrix", actor: "Keanu Reeves", emoji: "💊" },
-    { movie: "Titanic", actor: "Leonardo DiCaprio", emoji: "🚢" },
-    { movie: "Harry Potter", actor: "Daniel Radcliffe", emoji: "⚡" },
-    { movie: "Star Wars", actor: "Harrison Ford", emoji: "⭐" },
-    { movie: "Jurassic Park", actor: "Sam Neill", emoji: "🦖" },
-    { movie: "Fight Club", actor: "Brad Pitt", emoji: "🧼" },
-    { movie: "The Godfather", actor: "Marlon Brando", emoji: "🍝" },
-    { movie: "Gladiator", actor: "Russell Crowe", emoji: "⚔️" },
-    { movie: "Avatar", actor: "Sam Worthington", emoji: "🌌" },
-    { movie: "The Shawshank Redemption", actor: "Tim Robbins", emoji: "🔨" },
-    { movie: "Back to the Future", actor: "Michael J. Fox", emoji: "⏰" },
-    { movie: "Jaws", actor: "Roy Scheider", emoji: "🦈" },
-    { movie: "Indiana Jones", actor: "Harrison Ford", emoji: "🎩" },
-    { movie: "The Lion King", actor: "Matthew Broderick", emoji: "🦁" },
-    { movie: "E.T.", actor: "Drew Barrymore", emoji: "👽" },
-    { movie: "The Silence of the Lambs", actor: "Anthony Hopkins", emoji: "🔪" }
+// ФИЛЬМЫ И АКТЁРЫ (один фильм, много актёров)
+const MOVIES_DB = [
+    {
+        movie: "The Dark Knight",
+        actors: ["Christian Bale", "Heath Ledger", "Michael Caine", "Gary Oldman", "Morgan Freeman"],
+        emoji: "🦇",
+        description: "Gotham's dark hero fights chaos"
+    },
+    {
+        movie: "Harry Potter and the Sorcerer's Stone",
+        actors: ["Daniel Radcliffe", "Emma Watson", "Rupert Grint", "Richard Harris", "Alan Rickman"],
+        emoji: "⚡",
+        description: "Young wizard discovers magic school"
+    },
+    {
+        movie: "Pulp Fiction",
+        actors: ["John Travolta", "Uma Thurman", "Samuel L. Jackson", "Bruce Willis", "Harvey Keitel"],
+        emoji: "🍔",
+        description: "Interconnected crime stories"
+    },
+    {
+        movie: "Forrest Gump",
+        actors: ["Tom Hanks", "Robin Wright", "Gary Sinise", "Mykelti Williamson", "Sally Field"],
+        emoji: "🍫",
+        description: "Simple man witnesses history"
+    },
+    {
+        movie: "Titanic",
+        actors: ["Leonardo DiCaprio", "Kate Winslet", "Billy Zane", "Kathy Bates", "Gloria Stuart"],
+        emoji: "🚢",
+        description: "Love story on a sinking ship"
+    },
+    {
+        movie: "The Matrix",
+        actors: ["Keanu Reeves", "Laurence Fishburne", "Carrie-Anne Moss", "Hugo Weaving", "Joe Pantoliano"],
+        emoji: "💊",
+        description: "Reality is a simulation"
+    }
 ];
 
 io.on('connection', (socket) => {
@@ -45,13 +61,16 @@ io.on('connection', (socket) => {
     socket.on('createRoom', (name) => {
         const roomCode = Math.random().toString(36).substring(2, 7).toUpperCase();
         const player = { id: socket.id, name: name, isHost: true };
+        
+        // Выбираем случайный фильм для комнаты
+        const selectedMovie = MOVIES_DB[Math.floor(Math.random() * MOVIES_DB.length)];
+        
         rooms.set(roomCode, { 
             players: [player], 
-            gameStarted: false, 
-            movie: null, 
+            gameStarted: false,
+            selectedMovie: selectedMovie,
             spyId: null,
-            votes: {},
-            playersMovies: new Map()
+            votes: {}
         });
         socket.join(roomCode);
         socket.emit('roomCreated', { roomCode, player });
@@ -76,33 +95,27 @@ io.on('connection', (socket) => {
         if (room && !room.gameStarted && room.players.length >= 1) {
             room.gameStarted = true;
             
-            // Перемешиваем фильмы
-            const shuffledMovies = [...MOVIES];
-            for (let i = shuffledMovies.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [shuffledMovies[i], shuffledMovies[j]] = [shuffledMovies[j], shuffledMovies[i]];
-            }
-            
-            // Выдаём каждому игроку свой фильм (уникальный)
-            room.players.forEach((player, index) => {
-                const movieData = shuffledMovies[index % shuffledMovies.length];
-                room.playersMovies.set(player.id, movieData);
-            });
-            
-            // Выбираем шпиона (один из игроков ничего не знает о фильме)
+            // Выбираем шпиона
             const spyIndex = Math.floor(Math.random() * room.players.length);
             room.spyId = room.players[spyIndex].id;
             
             // Отправляем каждому игроку его данные
-            room.players.forEach(player => {
+            room.players.forEach((player, idx) => {
                 const isSpy = (player.id === room.spyId);
-                const movieData = room.playersMovies.get(player.id);
+                
+                let assignedActor = null;
+                if (!isSpy) {
+                    // Каждому не-шпиону даём РАЗНОГО актёра из фильма
+                    const actorIndex = idx % room.selectedMovie.actors.length;
+                    assignedActor = room.selectedMovie.actors[actorIndex];
+                }
                 
                 io.to(player.id).emit('gameStarted', {
                     isSpy: isSpy,
-                    movie: isSpy ? null : movieData.movie,
-                    actor: isSpy ? null : movieData.actor,
-                    emoji: isSpy ? "🕵️" : movieData.emoji,
+                    movie: isSpy ? null : room.selectedMovie.movie,
+                    actor: assignedActor,
+                    emoji: isSpy ? "🕵️" : room.selectedMovie.emoji,
+                    description: isSpy ? null : room.selectedMovie.description,
                     players: room.players.map(p => ({ id: p.id, name: p.name }))
                 });
             });
@@ -114,12 +127,10 @@ io.on('connection', (socket) => {
         if (room) {
             room.votes[socket.id] = targetId;
             
-            const allPlayers = room.players.filter(p => !room.eliminated?.includes(p.id));
+            const allPlayers = room.players;
             const allVoted = allPlayers.every(p => room.votes[p.id]);
             
             io.to(roomCode).emit('voteCast', { 
-                voter: socket.id, 
-                target: targetId, 
                 total: Object.keys(room.votes).length, 
                 needed: allPlayers.length 
             });
@@ -142,7 +153,6 @@ io.on('connection', (socket) => {
                 const eliminatedPlayer = room.players.find(p => p.id === eliminatedId);
                 
                 io.to(roomCode).emit('voteResult', {
-                    eliminatedId,
                     isSpy,
                     eliminatedName: eliminatedPlayer?.name
                 });
